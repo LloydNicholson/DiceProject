@@ -6,12 +6,14 @@ using UnityEngine;
 public class GameController : MonoBehaviour
 {
     private bool _threwDie;
-    private bool _canMoveBox = true;
-    private bool _restart;
+    private bool _restartGame;
+    private bool _moveBoxComplete;
+    private bool _restartComplete;
 
     [Header("Visuals")]
     public Die die;
     public Box box;
+    private bool _moveBoxToView;
 
     // Start is called before the first frame update
     void Start()
@@ -23,30 +25,39 @@ public class GameController : MonoBehaviour
     {
         if (die.HitCount < 1 && !_threwDie)
         {
+            if (Input.GetKey(KeyCode.Space))
+            {
+                SpinDie();
+            }
+
             if (Input.GetKeyUp(KeyCode.Space))
             {
                 ThrowDie();
                 _threwDie = true;
             }
+        }
 
-            if (Input.GetKey(KeyCode.Space))
+        if (die.LandedWithUpFace && !_moveBoxComplete)
+        {
+            _moveBoxToView = true;
+        }
+
+        if (_moveBoxToView)
+        {
+            _moveBoxComplete = box.MoveBoxToView();
+            if (_moveBoxComplete)
             {
-                SpinDie();
+                _moveBoxToView = false;
             }
         }
 
-        if (die.LandedWithUpFace && _canMoveBox)
-        {
-            _canMoveBox = box.CanMoveBoxToView();
-        }
-
-        if (Input.GetKeyDown(KeyCode.R))
+        if (Input.GetKeyDown(KeyCode.R) && !_restartComplete && _moveBoxComplete)
         {
             _threwDie = false;
-            _restart = true;
+            _restartGame = true;
         }
 
-        if (_restart)
+        if (_restartGame)
         {
             RestartGame();
         }
@@ -54,8 +65,14 @@ public class GameController : MonoBehaviour
 
     private void RestartGame()
     {
-        _restart = !die.SetOriginalPosition();
-        _restart = !box.SetOriginalPosition();
+        _restartComplete = die.ResetPosition();
+        _restartComplete = box.ResetPosition();
+        if (_restartComplete)
+        {
+            _moveBoxComplete = false;
+            _restartGame = false;
+            _restartComplete = false;
+        }
     }
 
     private void SpinDie()

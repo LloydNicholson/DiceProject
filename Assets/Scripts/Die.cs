@@ -9,6 +9,7 @@ public class Die : MonoBehaviour
 
     [Header("Movement")]
     public float force;
+    public float resetSpeed = 3f;
 
     [Header("Visuals")]
     public GameObject model;
@@ -29,7 +30,7 @@ public class Die : MonoBehaviour
 
     public void Throw(Vector3 targetPosition)
     {
-        var randomFloat = UnityEngine.Random.Range(-0.2f, 0.2f);
+        var randomFloat = Random.Range(-0.2f, 0.2f);
         var offset = new Vector3(randomFloat, randomFloat, 0);
         _diceRb.useGravity = true;
         var normalisedValue = targetPosition - (transform.position + offset) + (Vector3.up * 0.6f);
@@ -38,12 +39,12 @@ public class Die : MonoBehaviour
 
     private void Update()
     {
-        if (Physics.Raycast(model.transform.position, Vector3.down, out var hit, 0.1f))
+        if (Physics.Raycast(model.transform.position, Vector3.down, out var hit, 0.15f))
         {
             HitData = hit;
             _hitSomething = true;
             HitCount++;
-            if (_diceRb.velocity == Vector3.zero)
+            if (Vector3.Distance(_diceRb.velocity, Vector3.zero) <= 0.01f)
             {
                 var upFace = faceHandler.CheckFaceUp();
                 Upface = upFace;
@@ -52,29 +53,25 @@ public class Die : MonoBehaviour
         }
     }
 
-    public bool SetOriginalPosition()
+    public bool ResetPosition()
     {
-        if (HitCount >= 1)
-        {
-            _diceRb.useGravity = false;
-            _diceRb.velocity = Vector3.zero;
-            var targetStartRot = Quaternion.Euler(Vector3.zero);
-            if (model.transform.rotation != targetStartRot && model.transform.position != transform.position)
-            {
-                model.transform.rotation = Quaternion.Lerp(model.transform.rotation, targetStartRot, 0.05f);
-                model.transform.position = Vector3.Lerp(model.transform.position, transform.position, 0.05f);
+        _diceRb.useGravity = false;
+        _diceRb.velocity = Vector3.zero;
+        _hitSomething = false;
+        LandedWithUpFace = false;
+        HitCount = 0;
 
-                _hitSomething = false;
-                HitCount = 0;
-                return false;
-            }
-
-            return true;
-        }
-        else
+        var targetStartRot = Quaternion.Euler(Vector3.zero);
+        if (model.transform.rotation != targetStartRot && model.transform.position != transform.position)
         {
+            model.transform.rotation = Quaternion.Lerp(model.transform.rotation, targetStartRot, resetSpeed * Time.deltaTime);
+            model.transform.position = Vector3.Lerp(model.transform.position, transform.position, resetSpeed * Time.deltaTime);
+
             return false;
         }
+
+        return true;
+
     }
 
     public void Spin()
