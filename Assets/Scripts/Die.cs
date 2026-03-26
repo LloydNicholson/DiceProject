@@ -44,7 +44,7 @@ public class Die : MonoBehaviour
             HitData = hit;
             _hitSomething = true;
             HitCount++;
-            if (Vector3.Distance(_diceRb.velocity, Vector3.zero) <= 0.01f)
+            if (_diceRb.linearVelocity.magnitude <= 0.01f)
             {
                 var upFace = faceHandler.CheckFaceUp();
                 Upface = upFace;
@@ -53,25 +53,33 @@ public class Die : MonoBehaviour
         }
     }
 
-    public bool ResetPosition()
+    public void FreezePhysics()
     {
         _diceRb.useGravity = false;
-        _diceRb.velocity = Vector3.zero;
+        _diceRb.linearVelocity = Vector3.zero;
+        _diceRb.angularVelocity = Vector3.zero;
+    }
+
+    public bool ResetPosition()
+    {
+        FreezePhysics();
         _hitSomething = false;
         LandedWithUpFace = false;
         HitCount = 0;
 
         var targetStartRot = Quaternion.Euler(Vector3.zero);
-        if (model.transform.rotation != targetStartRot && model.transform.position != transform.position)
+        if (Quaternion.Angle(model.transform.rotation, targetStartRot) > 0.5f ||
+            Vector3.Distance(model.transform.position, transform.position) > 0.01f)
         {
-            model.transform.rotation = Quaternion.Lerp(model.transform.rotation, targetStartRot, resetSpeed * Time.deltaTime);
+            model.transform.rotation = Quaternion.Slerp(model.transform.rotation, targetStartRot, resetSpeed * Time.deltaTime);
             model.transform.position = Vector3.Lerp(model.transform.position, transform.position, resetSpeed * Time.deltaTime);
 
             return false;
         }
 
+        model.transform.rotation = targetStartRot;
+        model.transform.position = transform.position;
         return true;
-
     }
 
     public void Spin()
