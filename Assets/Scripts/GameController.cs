@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class GameController : MonoBehaviour
 {
@@ -23,14 +24,15 @@ public class GameController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        var keyboard = Keyboard.current;
         if (die.HitCount < 1 && !_threwDie)
         {
-            if (Input.GetKey(KeyCode.Space))
+            if (keyboard != null && keyboard.spaceKey.isPressed)
             {
                 SpinDie();
             }
 
-            if (Input.GetKeyUp(KeyCode.Space))
+            if (keyboard != null && keyboard.spaceKey.wasReleasedThisFrame)
             {
                 ThrowDie();
                 _threwDie = true;
@@ -51,7 +53,7 @@ public class GameController : MonoBehaviour
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.R) && !_restartComplete && _moveBoxComplete)
+        if (keyboard != null && keyboard.rKey.wasPressedThisFrame && !_restartComplete && _moveBoxComplete)
         {
             _threwDie = false;
             _restartGame = true;
