@@ -32,6 +32,7 @@ public class Die : MonoBehaviour
     {
         var randomFloat = Random.Range(-0.2f, 0.2f);
         var offset = new Vector3(randomFloat, randomFloat, 0);
+        _diceRb.isKinematic = false;
         _diceRb.useGravity = true;
         var normalisedValue = targetPosition - (transform.position + offset) + (Vector3.up * 0.6f);
         _diceRb.AddForce(normalisedValue * force);
@@ -44,8 +45,9 @@ public class Die : MonoBehaviour
             HitData = hit;
             _hitSomething = true;
             HitCount++;
-            if (Vector3.Distance(_diceRb.velocity, Vector3.zero) <= 0.01f)
+            if (_diceRb.linearVelocity.magnitude <= 0.01f && !LandedWithUpFace)
             {
+                FreezePhysics();
                 var upFace = faceHandler.CheckFaceUp();
                 Upface = upFace;
                 LandedWithUpFace = true;
@@ -53,25 +55,36 @@ public class Die : MonoBehaviour
         }
     }
 
+    public void FreezePhysics()
+    {
+        _diceRb.isKinematic = true;
+        _diceRb.useGravity = false;
+        _diceRb.linearVelocity = Vector3.zero;
+        _diceRb.angularVelocity = Vector3.zero;
+    }
+
     public bool ResetPosition()
     {
-        _diceRb.useGravity = false;
-        _diceRb.velocity = Vector3.zero;
-        _hitSomething = false;
+        FreezePhysics();
+        Upface = null;
         LandedWithUpFace = false;
         HitCount = 0;
+        _hitSomething = false;
 
         var targetStartRot = Quaternion.Euler(Vector3.zero);
-        if (model.transform.rotation != targetStartRot && model.transform.position != transform.position)
+        if (Quaternion.Angle(model.transform.rotation, targetStartRot) > 0.5f ||
+            Vector3.Distance(model.transform.position, transform.position) > 0.01f)
         {
-            model.transform.rotation = Quaternion.Lerp(model.transform.rotation, targetStartRot, resetSpeed * Time.deltaTime);
+            model.transform.rotation = Quaternion.Slerp(model.transform.rotation, targetStartRot, resetSpeed * Time.deltaTime);
             model.transform.position = Vector3.Lerp(model.transform.position, transform.position, resetSpeed * Time.deltaTime);
 
             return false;
         }
 
+        model.transform.rotation = targetStartRot;
+        model.transform.position = transform.position;
+        _diceRb.isKinematic = false;
         return true;
-
     }
 
     public void Spin()
