@@ -32,6 +32,7 @@ public class Die : MonoBehaviour
     {
         var randomFloat = Random.Range(-0.2f, 0.2f);
         var offset = new Vector3(randomFloat, randomFloat, 0);
+        _diceRb.isKinematic = false;
         _diceRb.useGravity = true;
         var normalisedValue = targetPosition - (transform.position + offset) + (Vector3.up * 0.6f);
         _diceRb.AddForce(normalisedValue * force);
@@ -44,8 +45,9 @@ public class Die : MonoBehaviour
             HitData = hit;
             _hitSomething = true;
             HitCount++;
-            if (_diceRb.linearVelocity.magnitude <= 0.01f)
+            if (_diceRb.linearVelocity.magnitude <= 0.01f && !LandedWithUpFace)
             {
+                FreezePhysics();
                 var upFace = faceHandler.CheckFaceUp();
                 Upface = upFace;
                 LandedWithUpFace = true;
@@ -55,6 +57,7 @@ public class Die : MonoBehaviour
 
     public void FreezePhysics()
     {
+        _diceRb.isKinematic = true;
         _diceRb.useGravity = false;
         _diceRb.linearVelocity = Vector3.zero;
         _diceRb.angularVelocity = Vector3.zero;
@@ -63,9 +66,10 @@ public class Die : MonoBehaviour
     public bool ResetPosition()
     {
         FreezePhysics();
-        _hitSomething = false;
+        Upface = null;
         LandedWithUpFace = false;
         HitCount = 0;
+        _hitSomething = false;
 
         var targetStartRot = Quaternion.Euler(Vector3.zero);
         if (Quaternion.Angle(model.transform.rotation, targetStartRot) > 0.5f ||
@@ -79,6 +83,7 @@ public class Die : MonoBehaviour
 
         model.transform.rotation = targetStartRot;
         model.transform.position = transform.position;
+        _diceRb.isKinematic = false;
         return true;
     }
 

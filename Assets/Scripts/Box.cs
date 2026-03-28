@@ -7,7 +7,6 @@ public class Box : MonoBehaviour
 {
     private Vector3 _originalPosition;
     private Quaternion _originalRotation;
-    private bool _dieParented;
 
     [Header("Movement")]
     public float showSpeed = 2f;
@@ -15,7 +14,6 @@ public class Box : MonoBehaviour
 
     [Header("References")]
     public GameObject mainCamera;
-    public Die die;
 
     private void Start()
     {
@@ -25,14 +23,6 @@ public class Box : MonoBehaviour
 
     public bool MoveBoxToView()
     {
-        // Parent the die to the box once so it moves and rotates with the box
-        if (!_dieParented && die != null)
-        {
-            die.FreezePhysics();
-            die.model.transform.SetParent(transform, true);
-            _dieParented = true;
-        }
-
         // Rotate the box so its forward face points toward the camera.
         // Fall back to Vector3.forward as the up vector when the camera is directly above or below.
         var directionToCamera = (mainCamera.transform.position - transform.position).normalized;
@@ -58,13 +48,6 @@ public class Box : MonoBehaviour
 
     public bool ResetPosition()
     {
-        // Unparent the die before resetting so it can return to its own anchor
-        if (_dieParented && die != null)
-        {
-            die.model.transform.SetParent(null);
-            _dieParented = false;
-        }
-
         var positionReached = Vector3.Distance(transform.position, _originalPosition) < 0.01f;
         var rotationReached = Quaternion.Angle(transform.rotation, _originalRotation) < 0.5f;
 
@@ -81,3 +64,4 @@ public class Box : MonoBehaviour
         return true;
     }
 }
+
